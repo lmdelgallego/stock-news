@@ -6,6 +6,7 @@ STOCK_NAME = "TSLA"
 COMPANY_NAME = "Tesla Inc"
 
 API_KEY = "6I7OG2Z6OFKPTOWD" # os.environ.get("API_KEY_STOCK") # "6I7OG2Z6OFKPTOWD"
+NEWS_API_KEY = "80af870410884d14822a46eb883d66a5"
 
 STOCK_ENDPOINT = "https://www.alphavantage.co/query"
 NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
@@ -16,7 +17,7 @@ NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
 # When stock price increase/decreases by 5% between yesterday and the day before yesterday then print("Get News").
 
 #TODO 1. - Get yesterday's closing stock price. Hint: You can perform list comprehensions on Python dictionaries. e.g. [new_value for (key, value) in dictionary.items()]
-yesterday_date = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d")
+yesterday_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
 stock_parameters = {
     "function": "TIME_SERIES_DAILY",
     "symbol": STOCK_NAME,
@@ -26,14 +27,15 @@ print(yesterday_date)
 response = requests.get(url=STOCK_ENDPOINT, params=stock_parameters)
 response.raise_for_status()
 data = response.json().get("Time Series (Daily)")
-print(data)
-yesterday_data = data[yesterday_date]
+data_list = [value for (key, value) in data.items()]
+print(data_list)
+yesterday_data = data_list[0] #data[yesterday_date]
 yesterday_closing_price = yesterday_data.get('4. close')
 print(yesterday_closing_price)
 
 # Get the day before yesterday's closing stock price
-before_yesterday_date = (date.today() - timedelta(days=3)).strftime("%Y-%m-%d")
-day_before_yesterday_data = data[before_yesterday_date]
+before_yesterday_date = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d")
+day_before_yesterday_data = data_list[1] #data[before_yesterday_date]
 day_before_yesterday_closing_price = day_before_yesterday_data.get('4. close')
 print(day_before_yesterday_closing_price)
 
@@ -45,18 +47,24 @@ print(difference)
 diff_percent = difference / float(yesterday_closing_price) * 100
 print(diff_percent)
 
-# If TODO4 percentage is greater than 5 then print("Get News").
-
-if diff_percent > 2:
-    print('Get Ness')
-
     ## STEP 2: https://newsapi.org/
     # Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME.
 
 #TODO 6. - Instead of printing ("Get News"), use the News API to get articles related to the COMPANY_NAME.
 
-#TODO 7. - Use Python slice operator to create a list that contains the first 3 articles. Hint: https://stackoverflow.com/questions/509211/understanding-slice-notation
+if diff_percent > 2:
+    news_parameters = {
+        "apiKey": NEWS_API_KEY,
+        "qInTitle": COMPANY_NAME
+    }
+    news_response = requests.get(url=NEWS_ENDPOINT, params=news_parameters)
+    news_response.raise_for_status()
+    articles = news_response.json().get("articles")
 
+
+#Use Python slice operator to create a list that contains the first 3 articles. Hint: https://stackoverflow.com/questions/509211/understanding-slice-notation
+    three_articles = articles[:3]
+    print(three_articles)
 
     ## STEP 3: Use twilio.com/docs/sms/quickstart/python
     #to send a separate message with each article's title and description to your phone number.
